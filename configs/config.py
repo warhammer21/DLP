@@ -1,14 +1,12 @@
-# -*- coding: utf-8 -*-
-"""Model config in json format"""
+# configs/config.py
 CFG = {
     "data": {
-        "path": "oxford_iiit_pet:3.*.*",
-        "image_size": 128,
-        "load_with_info": True
+        "path": "./data",  # Local path for datasets
+        "image_size": 128
     },
     "train": {
         "batch_size": 64,
-        "buffer_size": 1000,
+        "buffer_size": 1000,  # Ignored in PyTorch but left for compatibility
         "epoches": 20,
         "val_subsplits": 5,
         "optimizer": {
@@ -17,7 +15,7 @@ CFG = {
         "metrics": ["accuracy"]
     },
     "model": {
-        "input": [128, 128, 3],
+        "input": [3, 128, 128],  # PyTorch uses CHW format
         "up_stack": {
             "layer_1": 512,
             "layer_2": 256,
