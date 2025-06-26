@@ -2,6 +2,8 @@
 from torchvision.datasets import OxfordIIITPet
 from torchvision import transforms
 from torch.utils.data import DataLoader as TorchDataLoader, random_split
+from torchvision.transforms import functional as F
+import torch
 
 class PetDatasetLoader:
     """DataLoader for Oxford-IIIT Pet Dataset (PyTorch version)"""
@@ -18,7 +20,18 @@ class PetDatasetLoader:
     def load_data(data_config):
         transform = PetDatasetLoader.get_transforms(data_config.image_size)
 
-        dataset = OxfordIIITPet(root=data_config.path, download=True, target_types="segmentation", transform=transform)
+        def target_transform(mask):
+            resized = F.resize(mask, (data_config.image_size, data_config.image_size), interpolation=F.InterpolationMode.NEAREST)
+            return torch.as_tensor(F.pil_to_tensor(resized), dtype=torch.int64).squeeze()
+
+        dataset = OxfordIIITPet(
+            root=data_config.path,
+            download=True,
+            target_types="segmentation",
+            transform=transform,               # ✅ image transform
+            target_transform=target_transform  # ✅ mask transform
+        )
+
         return dataset
 
     @staticmethod
