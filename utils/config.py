@@ -7,8 +7,14 @@ class Config:
         self.model = model
 
     @classmethod
-    def from_json(cls, cfg):
-        params = json.loads(json.dumps(cfg), object_hook=HelperObject)
+    def from_json(cls, path):  # still supports loading from file if needed
+        with open(path, 'r') as f:
+            raw_dict = json.load(f)
+        return cls.from_dict(raw_dict)
+
+    @classmethod
+    def from_dict(cls, raw_dict):  # ✅ new method for dict input
+        params = json.loads(json.dumps(raw_dict), object_hook=HelperObject)
         return cls(params.data, params.train, params.model)
 
 class HelperObject:
