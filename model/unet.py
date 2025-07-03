@@ -1,5 +1,5 @@
 # model/unet.py
-import tensorflow as tf
+#import tensorflow as tf
 from dataloader.dataloader import DataLoader
 from utils.logger import get_logger
 from .base_model import BaseModel
