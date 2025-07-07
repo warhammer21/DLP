@@ -23,6 +23,6 @@ CFG = {
             "layer_4": 64,
             "kernels": 3
         },
-        "output": 3
+        "output": 4
     }
 }

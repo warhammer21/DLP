@@ -2,6 +2,7 @@
 import torch
 import torch.nn as nn
 import torch.optim as optim
+from tqdm import tqdm
 
 class Trainer:
     def __init__(self, model, train_loader, val_loader, config):
@@ -15,28 +16,21 @@ class Trainer:
 
     def train(self):
         self.model.train()
-        for epoch in range(self.config.train.epoches):
-            running_loss = 0.0
-            for images, masks in self.train_loader:
-                # Forward
-                outputs = self.model(images)
+        num_epochs = 1  # Just one epoch for testing
 
+        for epoch in range(num_epochs):
+            running_loss = 0.0
+            pbar = tqdm(self.train_loader, desc=f"Epoch [{epoch+1}/{num_epochs}]", unit="batch")
+
+            for images, masks in pbar:
+                outputs = self.model(images)
                 loss = self.criterion(outputs, masks)
 
-                # Backward
                 self.optimizer.zero_grad()
                 loss.backward()
                 self.optimizer.step()
 
                 running_loss += loss.item()
+                pbar.set_postfix(loss=loss.item())
 
-            print(f"Epoch [{epoch+1}/{self.config.train.epoches}], Loss: {running_loss:.4f}")
-
-    def evaluate(self):
-        self.model.eval()
-        with torch.no_grad():
-            for images, masks in self.val_loader:
-                outputs = self.model(images)
-                # You can add accuracy, IoU, Dice, etc.
-                print(f"Evaluated batch outputs shape: {outputs.shape}")
-                break  # Just one batch for sanity check
+            print(f"[Epoch {epoch+1}] Total Loss: {running_loss:.4f}")
