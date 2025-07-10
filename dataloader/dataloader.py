@@ -1,7 +1,7 @@
 # dataloader/dataloader.py
 from torchvision.datasets import OxfordIIITPet
 from torchvision import transforms
-from torch.utils.data import DataLoader as TorchDataLoader, random_split
+from torch.utils.data import DataLoader as TorchDataLoader, random_split,Subset
 from torchvision.transforms import functional as F
 import torch
 
@@ -31,8 +31,9 @@ class PetDatasetLoader:
             transform=transform,               # ✅ image transform
             target_transform=target_transform  # ✅ mask transform
         )
-
-        return dataset
+        tiny_subset = Subset(dataset, range(20))  # <-- only first 20 images
+        return tiny_subset
+        #return dataset
 
     @staticmethod
     def preprocess_data(dataset, batch_size, val_split=0.2):
