@@ -31,45 +31,62 @@ def cleanup():
 
 
 def ddp_main(rank, world_size, args):
+    print(f"[Rank {rank}] Initializing process")
+
     setup(rank, world_size, args.backend)
 
     config = Config.from_dict(CFG)
     config.train.batch_size = args.batch_size
 
+    # Load dataset
     dataset = PetDatasetLoader.load_data(config.data)
     train_loader, val_loader = PetDatasetLoader.preprocess_data(dataset, config.train.batch_size)
 
-    # Split dataset manually
-    total_len = len(train_loader.dataset)
-    part_len = total_len // world_size
-    indices = list(range(total_len))
+    total_train_images = len(train_loader.dataset)
+    print(f"[Rank {rank}] Total training images: {total_train_images}")
+
+    # Manual split for this simple DDP version
+    part_len = total_train_images // world_size
+    indices = list(range(total_train_images))
     local_indices = indices[rank * part_len: (rank + 1) * part_len]
+
+    print(f"[Rank {rank}] Will train on {len(local_indices)} images: {local_indices[:5]}...")
 
     local_subset = torch.utils.data.Subset(train_loader.dataset, local_indices)
     local_loader = torch.utils.data.DataLoader(local_subset, batch_size=args.batch_size, shuffle=True)
 
+    # Show how many batches per rank
+    num_batches = len(local_loader)
+    print(f"[Rank {rank}] Number of batches: {num_batches} with batch size {args.batch_size}")
+
     model = UNet(config)
     trainer = Trainer(model=model, train_loader=local_loader, val_loader=val_loader, config=config)
+
+    print(f"[Rank {rank}] Starting training...")
     trainer.train()
+    print(f"[Rank {rank}] Finished training.")
 
     torch.save(model.state_dict(), f"model_rank_{rank}.pt")
+    print(f"[Rank {rank}] Model saved to model_rank_{rank}.pt")
 
     cleanup()
 
 
 def run(args):
     world_size = args.world_size
+    print(f"Launching training with {world_size} processes")
     mp.spawn(ddp_main, args=(world_size, args), nprocs=world_size, join=True)
 
-    # Average saved models
+    print("All processes finished. Now averaging models...")
     models = []
     for i in range(world_size):
         model = UNet(Config.from_dict(CFG))
         model.load_state_dict(torch.load(f"model_rank_{i}.pt"))
         models.append(model)
+        print(f"Loaded model from model_rank_{i}.pt")
 
     final_model = average_models(models)
-    print("Final averaged model:")
+    print("Final averaged model ready.")
     print(final_model)
 
 
