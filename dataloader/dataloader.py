@@ -28,8 +28,8 @@ class PetDatasetLoader:
             root=data_config.path,
             download=True,
             target_types="segmentation",
-            transform=transform,               # ✅ image transform
-            target_transform=target_transform  # ✅ mask transform
+            transform=transform,
+            target_transform=target_transform
         )
         tiny_subset = Subset(dataset, range(20))  # <-- only first 20 images
         return tiny_subset
